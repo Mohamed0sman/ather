@@ -59,8 +59,17 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
       // Construct the full URL
       const fullUrl = `${STORAGE_URL}/${BUCKET_NAME}/${data.path}`;
 
-      await onPhotoUploaded?.(fullUrl);
+      // Call the callback and handle any errors
+      if (onPhotoUploaded) {
+        try {
+          await onPhotoUploaded(fullUrl);
+        } catch (callbackError) {
+          // Silently log - upload succeeded but profile update failed
+          console.warn('Profile update failed:', callbackError);
+        }
+      }
 
+      // Show success toast only if upload succeeded
       toast({
         title: 'Success',
         description: 'Profile photo updated successfully.',
@@ -70,7 +79,7 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
       toast({
         variant: 'destructive',
         title: 'Error uploading file',
-        description: error.message,
+        description: error?.message || 'Unknown error',
       });
     } finally {
       setIsUploading(false);

@@ -40,8 +40,6 @@ interface Props {
   onColumnHide?: (columnId: string) => void;
 }
 
-const supabase = createClient();
-
 export const ColumnContainer = ({
   projectId,
   column,
@@ -59,6 +57,7 @@ export const ColumnContainer = ({
   const [isCreating, setIsCreating] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
+  const supabase = createClient();
 
   const { setNodeRef } = useDroppable({
     id: column.id,
@@ -76,7 +75,7 @@ export const ColumnContainer = ({
       setUser(session?.user || null);
     };
     getUser();
-  }, []);
+  }, [supabase.auth]);
 
   const handleAddItem = async () => {
     if (!inputValue.trim() || isCreating || !user) return;
@@ -105,7 +104,8 @@ export const ColumnContainer = ({
       setInputValue('');
       setShowInput(false);
     } catch (error) {
-      console.error('Error creating task:', error);
+      // Don't log error object to avoid JSON parsing issues
+      console.error('Error creating task');
       toast({
         variant: 'destructive',
         title: 'Error',

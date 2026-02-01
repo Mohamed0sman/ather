@@ -59,7 +59,7 @@ export const ColumnMenuOptions = ({
       });
       closeModal();
     } catch (error) {
-      console.error('Error updating limit:', error);
+      console.error('Error updating limit');
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -81,7 +81,7 @@ export const ColumnMenuOptions = ({
       });
       closeModal();
     } catch (error) {
-      console.error('Error updating details:', error);
+      console.error('Error updating details');
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -103,7 +103,7 @@ export const ColumnMenuOptions = ({
       });
       closeModal();
     } catch (error) {
-      console.error('Error deleting column:', error);
+      console.error('Error deleting column');
       toast({
         variant: 'destructive',
         title: 'Error',

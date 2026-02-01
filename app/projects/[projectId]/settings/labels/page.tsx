@@ -18,7 +18,7 @@ export default async function LabelsPage({ params }: Props) {
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Error loading labels:', error);
+    console.error('Error loading labels');
     redirect('/projects');
   }
 

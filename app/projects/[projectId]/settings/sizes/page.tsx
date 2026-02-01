@@ -19,7 +19,7 @@ export default async function SizesPage({ params }: Props) {
     .order('order', { ascending: true });
 
   if (error) {
-    console.error('Error loading sizes:', error);
+    console.error('Error loading sizes');
     redirect('/projects');
   }
 

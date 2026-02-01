@@ -19,8 +19,6 @@ interface Props {
   createdBy: string;
 }
 
-const supabase = createClient();
-
 export const InviteUsers = ({
   projectName,
   projectId,
@@ -36,6 +34,7 @@ export const InviteUsers = ({
   const [searchResults, setSearchResults] = useState<IUser[]>([]);
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState<IUser | null>(null);
+  const supabase = createClient();
 
   useEffect(() => {
     async function getUser() {
@@ -52,7 +51,7 @@ export const InviteUsers = ({
       }
     }
     getUser();
-  }, []);
+  }, [supabase]);
 
   const debouncedSearch = useDebounce(async (term: string) => {
     if (term.length < 2) {
@@ -85,7 +84,7 @@ export const InviteUsers = ({
       if (error) throw error;
       setSearchResults(data || []);
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error('Error searching users');
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -164,7 +163,7 @@ export const InviteUsers = ({
       setSearchTerm('');
       setSearchResults([]);
     } catch (error) {
-      console.error('Error inviting user:', error);
+      console.error('Error inviting user');
       toast({
         variant: 'destructive',
         title: 'Error',

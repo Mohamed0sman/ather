@@ -23,19 +23,33 @@ const LandingPage: React.FC = () => {
   const supabase = createClient();
 
   useEffect(() => {
+    let mounted = true;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setIsLoading(false);
+      if (mounted) {
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      }
+    }).catch(() => {
+      if (mounted) {
+        setUser(null);
+        setIsLoading(false);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      if (mounted) {
+        setUser(session?.user ?? null);
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   if (isLoading) {
     return null; // or a loading spinner

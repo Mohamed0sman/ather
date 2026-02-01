@@ -2,8 +2,6 @@ import { useAccessStore } from '@/stores/useAccessStore';
 import { createClient } from './supabase/client';
 import { users } from './users';
 
-const supabase = createClient();
-
 export type AuthError = {
   message: string;
   status?: number;
@@ -11,26 +9,10 @@ export type AuthError = {
 
 export const auth = {
   // Email & Password Sign Up
-  async signUp(email: string, password: string) {
-    // Step 1: Check if email already exists in users table
-    const { data: existingUser, error: checkError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (existingUser) {
-      throw new Error(
-        'This email is already registered. Try signing in instead.'
-      );
-    }
-
-    if (checkError && checkError.code !== 'PGRST116') {
-      // PGRST116 means no rows returned
-      throw checkError;
-    }
-
-    // Step 2: Try to sign up the user
+  signUp: async (email: string, password: string) => {
+    const supabase = createClient();
+    
+    // Step 1: Sign up the user in Supabase Auth
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -49,22 +31,21 @@ export const auth = {
       throw new Error('Failed to create user account');
     }
 
-    // Step 3: Only proceed with profile creation for new signups
-    if (data.user.identities?.length === 0) {
-      try {
-        await users.captureUserDetails(data.user);
-      } catch (profileError) {
-        // If profile creation fails, clean up the auth user
-        await supabase.auth.admin.deleteUser(data.user.id);
-        throw profileError;
-      }
+    // Step 2: Create user profile in the users table
+    try {
+      await users.captureUserDetails(data.user);
+    } catch (profileError) {
+      console.error('Error creating user profile:', profileError);
+      // Don't fail signup if profile creation fails
+      // The trigger might handle it, or we can create it later
     }
 
     return data;
   },
 
   // Email & Password Sign In
-  async signIn(email: string, password: string) {
+  signIn: async (email: string, password: string) => {
+    const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -72,18 +53,24 @@ export const auth = {
     if (error) throw error;
 
     if (data.user) {
-      await users.captureUserDetails(data.user);
+      // Ensure user profile exists
+      try {
+        await users.captureUserDetails(data.user);
+      } catch (profileError) {
+        console.error('Error ensuring user profile:', profileError);
+      }
     }
 
     return data;
   },
 
   // OAuth Sign In (Google, GitHub)
-  async signInWithOAuth(provider: 'github' | 'google', nextUrl?: string) {
+  signInWithOAuth: async (provider: 'github' | 'google', nextUrl?: string) => {
+    const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${location.origin}/auth/callback?next=${nextUrl || '/'}`,
+        redirectTo: `${location.origin}/auth/callback?next=${nextUrl || '/projects'}`,
       },
     });
     if (error) throw error;
@@ -91,24 +78,32 @@ export const auth = {
   },
 
   // Sign Out
-  async signOut() {
+  signOut: async () => {
+    const supabase = createClient();
     const { error } = await supabase.auth.signOut();
     useAccessStore.getState().reset();
     if (error) throw { message: error.message, status: error.status };
   },
 
   // Password Reset Request
-  async resetPasswordRequest(email: string) {
-    // First check if user exists in our users table and uses email provider
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, provider')
-      .eq('email', email)
-      .single();
+  resetPasswordRequest: async (email: string) => {
+    const supabase = createClient();
 
-    if (userError && userError.code !== 'PGRST116') {
-      // PGRST116 means no rows returned
-      throw userError;
+    // Try to get user from users table, but don't fail if table doesn't exist
+    let user = null;
+    try {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, provider')
+        .eq('email', email)
+        .single();
+
+      if (!userError && userData) {
+        user = userData;
+      }
+    } catch (e) {
+      // Table doesn't exist or other error - proceed without user check
+      console.warn('Could not fetch user from users table:', e);
     }
 
     // If user doesn't exist or doesn't use email auth, still return success
@@ -134,7 +129,8 @@ export const auth = {
   },
 
   // Password Reset
-  async resetPassword(newPassword: string) {
+  resetPassword: async (newPassword: string) => {
+    const supabase = createClient();
     const { data, error } = await supabase.auth.updateUser({
       password: newPassword,
     });

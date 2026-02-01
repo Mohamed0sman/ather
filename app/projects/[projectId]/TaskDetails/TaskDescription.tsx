@@ -28,7 +28,7 @@ export const TaskDescription = () => {
       await updateDescription(description);
       setEditable(false);
     } catch (error) {
-      console.error('Failed to save description:', error);
+      console.error('Failed to save description');
     } finally {
       setIsSaving(false);
     }

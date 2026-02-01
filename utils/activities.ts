@@ -1,10 +1,10 @@
 import { createClient } from './supabase/client';
-
-const supabase = createClient();
+import { throwSupabaseError } from './error-utils';
 
 export const activities = {
   // Get all activities for a task
   getTaskActivities: async (taskId: string) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('activities')
       .select(
@@ -24,7 +24,7 @@ export const activities = {
       .eq('task_id', taskId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to fetch activities');
     return data as ActivityResponse[];
   },
 
@@ -34,6 +34,7 @@ export const activities = {
     user_id: string;
     content: TaskActivity;
   }) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('activities')
       .insert({
@@ -58,7 +59,7 @@ export const activities = {
       )
       .single();
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to create activity');
     return data as ActivityResponse;
   },
 
@@ -70,6 +71,7 @@ export const activities = {
       content: TaskActivity;
     }[]
   ) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('activities')
       .insert(
@@ -95,18 +97,19 @@ export const activities = {
       `
       );
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to create activities');
     return data as ActivityResponse[];
   },
 
   // Delete an activity
   delete: async (activityId: string) => {
+    const supabase = createClient();
     const { error } = await supabase
       .from('activities')
       .delete()
       .eq('id', activityId);
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to delete activity');
   },
 
   // Update an activity
@@ -114,6 +117,7 @@ export const activities = {
     activityId: string,
     updates: Partial<Pick<ActivityResponse, 'content'>>
   ) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('activities')
       .update({
@@ -138,7 +142,7 @@ export const activities = {
       )
       .single();
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to update activity');
     return data as ActivityResponse;
   },
 };

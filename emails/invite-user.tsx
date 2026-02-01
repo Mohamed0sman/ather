@@ -27,7 +27,7 @@ export const InviteUserEmail = ({
   projectName,
   inviteLink,
 }: InviteUserEmailProps) => {
-  const previewText = `Join ${projectName} on ProjeX`;
+  const previewText = `Join ${projectName} on ATHER`;
 
   return (
     <Html>
@@ -37,14 +37,14 @@ export const InviteUserEmail = ({
         <Body className="bg-white my-auto mx-auto font-sans px-2">
           <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] max-w-[465px]">
             <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
-              Join <strong>{projectName}</strong> on <strong>ProjeX</strong>
+              Join <strong>{projectName}</strong> on <strong>ATHER</strong>
             </Heading>
             <Text className="text-black text-[14px] leading-[24px]">
               Hello {username},
             </Text>
             <Text className="text-black text-[14px] leading-[24px]">
               <strong>{invitedByUsername}</strong> has invited you to the{' '}
-              <strong>{projectName}</strong> project on <strong>ProjeX</strong>.
+              <strong>{projectName}</strong> project on <strong>ATHER</strong>.
             </Text>
 
             <Section className="text-center mt-[32px] mb-[32px]">
@@ -63,7 +63,7 @@ export const InviteUserEmail = ({
             </Text>
             <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
             <Text className="text-[#666666] text-[12px] leading-[24px]">
-              Team at ProjeX
+              Team at ATHER
             </Text>
           </Container>
         </Body>

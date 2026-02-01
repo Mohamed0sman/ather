@@ -47,7 +47,7 @@ export const CreateNewLabel = ({ projectId, onLabelCreated }: Props) => {
       await reloadLabels();
       await reloadProjectTasks();
     } catch (error) {
-      console.error('Error creating label:', error);
+      console.error('Error creating label');
       toast({
         variant: 'destructive',
         title: 'Error',

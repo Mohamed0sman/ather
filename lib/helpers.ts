@@ -1,12 +1,22 @@
-export function hslModifyLightness(hsl: string, newLightness: number) {
+export function hslModifyLightness(hsl: string | null | undefined, newLightness: number) {
+  // Handle null, undefined, or empty strings gracefully
+  if (!hsl || typeof hsl !== 'string') {
+    // Return a default color or the original value
+    return hsl || '#888888';
+  }
+  
   if (newLightness < 0 || newLightness > 100) {
     throw new Error('Lightness should be a percentage between 0 and 100');
   }
-  const hslPattern = /hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/;
+  
+  // Support both hsl() and hsla() formats
+  const hslPattern = /hsla?\((\d+),\s*(\d+)%,\s*(\d+(?:%)?)(?:,\s*[\d.]+)?\)/;
   const match = hsl.match(hslPattern);
 
   if (!match) {
-    throw new Error('Invalid HSL color string');
+    // If it doesn't match the HSL pattern, return a default color
+    console.warn('Invalid HSL color string:', hsl);
+    return '#888888';
   }
 
   const h = match[1];

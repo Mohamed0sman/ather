@@ -20,7 +20,7 @@ export default async function PrioritiesPage({ params }: Props) {
     .order('order', { ascending: true });
 
   if (error) {
-    console.error('Error loading priorities:', error);
+    console.error('Error loading priorities');
     redirect('/projects');
   }
 

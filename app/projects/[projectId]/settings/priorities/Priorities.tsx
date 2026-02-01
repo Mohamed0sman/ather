@@ -68,7 +68,7 @@ export const Priorities = ({ projectId, items: initialItems }: Props) => {
       await reloadPriorities();
       await reloadProjectTasks();
     } catch (error) {
-      console.error('Error saving priorities:', error);
+      console.error('Error saving priorities');
       toast({
         variant: 'destructive',
         title: 'Error',

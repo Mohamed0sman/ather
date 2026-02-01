@@ -67,7 +67,7 @@ export const Sizes = ({ projectId, items: initialItems }: Props) => {
       await reloadSizes();
       await reloadProjectTasks();
     } catch (error) {
-      console.error('Error saving sizes:', error);
+      console.error('Error saving sizes');
       toast({
         variant: 'destructive',
         title: 'Error',

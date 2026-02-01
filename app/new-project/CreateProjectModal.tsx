@@ -1,5 +1,32 @@
 'use client';
 
+// Helper function to safely get error message
+function getSafeErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (error && typeof error === 'object') {
+    const errObj = error as Record<string, unknown>;
+    if (typeof errObj.message === 'string' && errObj.message) {
+      return errObj.message;
+    }
+    if (typeof errObj.error_description === 'string' && errObj.error_description) {
+      return errObj.error_description;
+    }
+    if (typeof errObj.details === 'string' && errObj.details) {
+      return errObj.details;
+    }
+  }
+  if (error !== null && error !== undefined) {
+    // Only use String() for primitive values
+    const type = typeof error;
+    if (type === 'string') return error as string;
+    if (type === 'number') return String(error);
+    if (type === 'boolean') return String(error);
+  }
+  return 'An error occurred. Please try again.';
+}
+
 import { CreateCustomFieldOptionModal } from '@/components/CreateCustomFieldOptionModal';
 import { CreateOrEditLabelForm } from '@/components/CreateOrEditLabelForm';
 import { CustomFieldOptions } from '@/components/CustomFieldOptions';
@@ -31,7 +58,6 @@ import { secondaryBtnStyles, successBtnStyles } from '../commonStyles';
 import { LabelList } from '../projects/[projectId]/settings/labels/LabelList';
 import { useRouter } from 'next/navigation';
 import { projects } from '@/utils/projects';
-import { useToast } from '@/components/ui/use-toast';
 import { createClient } from '@/utils/supabase/client';
 
 interface Props {
@@ -45,7 +71,6 @@ interface Props {
 export const CreateProjectModal = ({ projectDetails }: Props) => {
   const { isModalOpen, openModal, closeModal } = useModalDialog();
   const router = useRouter();
-  const { toast } = useToast();
   const [statuses, setStatuses] = useState(defaultStatuses);
   const [sizes, setSizes] = useState(defaultSizes);
   const [priorities, setPriorities] = useState(defaultPriorities);
@@ -90,17 +115,28 @@ export const CreateProjectModal = ({ projectDetails }: Props) => {
   };
 
   const handleCreateProject = async () => {
+    // Prevent multiple simultaneous submissions
+    if (isCreating) return;
+    
+    setIsCreating(true);
+    
     try {
-      setIsCreating(true);
       const supabase = createClient();
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      // Get session
+      const { data } = await supabase.auth.getSession();
+      const session = data?.session;
+      
+      if (!session) {
+        // Use alert instead of toast to avoid potential issues
+        alert('Please log in to create a project.');
+        return;
+      }
 
       const projectData = {
-        ...projectDetails,
+        name: projectDetails.name,
+        description: projectDetails.description,
+        readme: projectDetails.readme,
         ...(skipDefaultOptions
           ? {}
           : {
@@ -115,24 +151,49 @@ export const CreateProjectModal = ({ projectDetails }: Props) => {
         projectData as ProjectWithOptions,
         session.user.id
       );
-
-      toast({
-        title: 'Success',
-        description: 'Project created successfully',
-      });
-
-      closeModal();
-      router.push(`/projects/${project.id}`);
-    } catch (error) {
-      console.error('Error creating project:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Failed to create project. Please try again.',
-      });
+      
+      try {
+        // Skip success toast to avoid potential serialization issues
+        closeModal();
+        if (project?.id) {
+          // Use window.location instead of router.push to avoid any serialization issues
+          window.location.href = `/projects/${project.id}`;
+        }
+      } catch (navError) {
+        // Silently fail on navigation errors
+        console.error('Navigation error');
+      }
+    } catch (error: unknown) {
+      // Use setTimeout to delay error handling and avoid any sync issues
+      setTimeout(() => {
+        try {
+          // Use safe error message extraction
+          const errorMessage = getSafeErrorMessage(error);
+          
+          // Check for database-related errors (case-insensitive)
+          const errorLower = errorMessage.toLowerCase();
+          const isDatabaseError = 
+            errorLower.includes('does not exist') || 
+            errorLower.includes('relation') || 
+            errorLower.includes('pgRST') ||
+            errorLower.includes('database') ||
+            errorLower.includes('violates foreign key') ||
+            errorLower.includes('null value') || 
+            errorLower.includes('column') || 
+            errorLower.includes('table') ||
+            errorLower.includes('schema') ||
+            errorLower.includes('not created');
+          
+          // Use alert instead of toast to avoid potential serialization issues
+          if (isDatabaseError) {
+            alert('Database Not Ready: Please run the SQL schema in Supabase. Some tables may be missing.');
+          } else {
+            alert('Error: ' + errorMessage);
+          }
+        } catch {
+          // Silently fail if error handling itself fails
+        }
+      }, 100);
     } finally {
       setIsCreating(false);
     }

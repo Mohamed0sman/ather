@@ -46,7 +46,7 @@ export const AccountDetails = ({ initialData }: AccountDetailsProps) => {
         description: 'Your profile has been successfully updated.',
       });
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error updating profile');
       toast({
         variant: 'destructive',
         title: 'Error',

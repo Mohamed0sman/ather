@@ -67,7 +67,7 @@ export const Statuses = ({ projectId, items: initialItems }: Props) => {
       await reloadStatuses();
       await reloadProjectTasks();
     } catch (error) {
-      console.error('Error saving statuses:', error);
+      console.error('Error saving statuses');
       toast({
         variant: 'destructive',
         title: 'Error',

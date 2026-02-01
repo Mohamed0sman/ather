@@ -35,7 +35,8 @@ export function LoginForm() {
       router.push('/projects');
       router.refresh();
     } catch (error) {
-      console.error('Auth error:', error);
+      // Don't log the full error object to avoid JSON parsing issues
+      console.error('Auth error occurred');
       const { message } = getAuthError(error);
       toast({
         variant: 'destructive',

@@ -1,4 +1,4 @@
-# Project Management with Kanban (ProjeX)
+# Project Management with Kanban (ATHER)
 
 A modern project management application built with Next.js that helps teams organize and track their work using a Kanban board interface. The app provides a visual way to manage tasks and workflows while keeping teams synchronized.
 

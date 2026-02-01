@@ -43,17 +43,30 @@ export function CreateAccountForm() {
       setIsLoading(true);
       await auth.signUp(email, password);
       toast({
-        title: 'Success',
-        description: 'Please check your email to verify your account.',
+        title: 'Success!',
+        description: 'Account created successfully. You can now log in.',
       });
       router.push('/login');
-    } catch (error) {
-      const { message } = getAuthError(error);
+    } catch (error: unknown) {
+      // Don't log the full error object to avoid JSON parsing issues
+      console.error('Signup error occurred');
+
+      let errorMessage = 'An error occurred. Please try again.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object') {
+        const errObj = error as Record<string, unknown>;
+        if (typeof errObj.message === 'string' && errObj.message) {
+          errorMessage = errObj.message;
+        } else if (typeof errObj.error_description === 'string' && errObj.error_description) {
+          errorMessage = errObj.error_description;
+        }
+      }
 
       toast({
         variant: 'destructive',
         title: 'Account Creation Error',
-        description: message,
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);

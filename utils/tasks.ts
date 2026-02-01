@@ -1,12 +1,12 @@
 import { DateUpdates } from '@/hooks/useTaskQueries';
 import { createClient } from './supabase/client';
-
-const supabase = createClient();
+import { throwSupabaseError } from './error-utils';
 
 export const tasks = {
   // Board-related operations
   board: {
     getProjectTasks: async (projectId: string) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('tasks')
         .select(
@@ -28,7 +28,7 @@ export const tasks = {
         )
         .eq('project_id', projectId);
 
-      if (error) throw error;
+      if (error) throwSupabaseError(error, 'Failed to fetch project tasks');
 
       return data.map((task) => ({
         ...task,
@@ -40,6 +40,7 @@ export const tasks = {
     },
 
     updatePosition: async (taskId: string, statusPosition: number) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('tasks')
         .update({
@@ -50,7 +51,7 @@ export const tasks = {
         .select('*')
         .single();
 
-      if (error) throw error;
+      if (error) throwSupabaseError(error, 'Failed to update task position');
       return data as ITask;
     },
 
@@ -59,6 +60,7 @@ export const tasks = {
       statusId: string,
       statusPosition: number
     ) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('tasks')
         .update({
@@ -70,7 +72,7 @@ export const tasks = {
         .select('*')
         .single();
 
-      if (error) throw error;
+      if (error) throwSupabaseError(error, 'Failed to move task');
       return data as ITask;
     },
   },
@@ -78,6 +80,7 @@ export const tasks = {
   // Task details operations
   details: {
     get: async (taskId: string) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('tasks')
         .select(
@@ -109,6 +112,7 @@ export const tasks = {
     },
 
     update: async (taskId: string, updates: Partial<ITask>) => {
+      const supabase = createClient();
       // Handle task_labels junction table
       if ('labels' in updates) {
         const labelIds = updates.labels || [];
@@ -164,7 +168,7 @@ export const tasks = {
           .select('*')
           .single();
 
-        if (error) throw error;
+        if (error) throwSupabaseError(error, 'Failed to update task');
         return data as ITask;
       }
 
@@ -172,11 +176,13 @@ export const tasks = {
     },
 
     delete: async (taskId: string) => {
+      const supabase = createClient();
       const { error } = await supabase.from('tasks').delete().eq('id', taskId);
-      if (error) throw error;
+      if (error) throwSupabaseError(error, 'Failed to delete task');
     },
 
     updateDates: async (taskId: string, dates: DateUpdates) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('tasks')
         .update({
@@ -188,13 +194,14 @@ export const tasks = {
         .select('*')
         .single();
 
-      if (error) throw error;
+      if (error) throwSupabaseError(error, 'Failed to update task dates');
       return data as ITask;
     },
   },
 
   // Task creation
   create: async (task: Partial<ITask>) => {
+    const supabase = createClient();
     const { data: createdTask, error } = await supabase
       .from('tasks')
       .insert(task)
@@ -210,7 +217,7 @@ export const tasks = {
       )
       .single();
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to create task');
     return createdTask as ITaskWithOptions;
   },
 };

@@ -70,7 +70,7 @@ export const LabelList = ({
       await reloadLabels();
       await reloadProjectTasks();
     } catch (error) {
-      console.error('Error updating label:', error);
+      console.error('Error updating label');
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -95,7 +95,7 @@ export const LabelList = ({
       await reloadLabels();
       await reloadProjectTasks();
     } catch (error) {
-      console.error('Error deleting label:', error);
+      console.error('Error deleting label');
       toast({
         variant: 'destructive',
         title: 'Error',

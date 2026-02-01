@@ -132,7 +132,7 @@ export const ManageAccess = ({
 
       useAccessStore.getState().reset();
     } catch (error) {
-      console.error('Error updating member role:', error);
+      console.error('Error updating member role');
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -176,7 +176,7 @@ export const ManageAccess = ({
         description: 'Members removed successfully',
       });
     } catch (error) {
-      console.error('Error removing members:', error);
+      console.error('Error removing members');
       toast({
         variant: 'destructive',
         title: 'Error',

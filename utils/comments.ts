@@ -1,10 +1,10 @@
 import { createClient } from './supabase/client';
-
-const supabase = createClient();
+import { throwSupabaseError } from './error-utils';
 
 export const comments = {
   // Get all comments for a task
   getTaskComments: async (taskId: string) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('comments')
       .select(
@@ -26,7 +26,7 @@ export const comments = {
       .eq('task_id', taskId)
       .order('created_at', { ascending: true }); // Show oldest comments first
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to fetch comments');
     return data as CommentResponse[];
   },
 
@@ -36,6 +36,7 @@ export const comments = {
     user_id: string;
     content: string;
   }) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('comments')
       .insert({
@@ -61,22 +62,24 @@ export const comments = {
       )
       .single();
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to create comment');
     return data as CommentResponse;
   },
 
   // Delete a comment
   delete: async (commentId: string) => {
+    const supabase = createClient();
     const { error } = await supabase
       .from('comments')
       .delete()
       .eq('id', commentId);
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to delete comment');
   },
 
   // Update a comment
   update: async (commentId: string, updates: { content: string }) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('comments')
       .update({
@@ -102,7 +105,7 @@ export const comments = {
       )
       .single();
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to update comment');
     return data as CommentResponse;
   },
 };

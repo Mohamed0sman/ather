@@ -19,7 +19,7 @@ export default async function StatusesPage({ params }: Props) {
     .order('order', { ascending: true });
 
   if (error) {
-    console.error('Error loading statuses:', error);
+    console.error('Error loading statuses');
     redirect('/projects');
   }
 

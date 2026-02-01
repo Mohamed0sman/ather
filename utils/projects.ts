@@ -1,13 +1,38 @@
 import { createClient } from './supabase/client';
 
-const supabase = createClient();
+// Helper function to safely extract error messages
+function extractErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  } else if (error && typeof error === 'object') {
+    const errObj = error as Record<string, unknown>;
+    if (typeof errObj.message === 'string') {
+      return errObj.message;
+    } else if (typeof errObj.error_description === 'string') {
+      return errObj.error_description;
+    } else if (typeof errObj.details === 'string') {
+      return errObj.details;
+    }
+    // Safe fallback
+    return 'Unknown error';
+  }
+  if (error !== null && error !== undefined) {
+    // Only use String() for primitive values
+    const type = typeof error;
+    if (type === 'string') return error as string;
+    if (type === 'number') return String(error);
+    if (type === 'boolean') return String(error);
+  }
+  return 'Unknown error';
+}
 
 export const projects = {
   // Project management
   management: {
     create: async (projectData: ProjectWithOptions, userId: string) => {
+      const supabase = createClient();
       try {
-        // 1. Create the project first
+        // 1. Create project first
         const { data: project, error: projectError } = await supabase
           .from('projects')
           .insert({
@@ -21,7 +46,35 @@ export const projects = {
           .select()
           .single();
 
-        if (projectError) throw projectError;
+        if (projectError) {
+          // Handle Supabase error objects with proper message extraction
+          let errorMessage = 'Unknown database error';
+          
+          if (projectError instanceof Error) {
+            errorMessage = projectError.message;
+          } else if (projectError && typeof projectError === 'object') {
+            const errObj = projectError as Record<string, unknown>;
+            if (typeof errObj.message === 'string') {
+              errorMessage = errObj.message;
+            } else if (typeof errObj.details === 'string') {
+              errorMessage = errObj.details;
+            } else if (typeof errObj.hint === 'string') {
+              errorMessage = `${errObj.message || 'Database error'}: ${errObj.hint}`;
+            }
+          }
+          
+          // If table doesn't exist, throw a more user-friendly error
+          if (errorMessage.includes('does not exist') || projectError.code === 'PGRST116') {
+            throw new Error('Database tables not created. Please run the SQL schema in Supabase.');
+          }
+          
+          // For foreign key violations, provide specific guidance
+          if (errorMessage.includes('violates foreign key') || errorMessage.includes('not present in table')) {
+            throw new Error('Referenced data does not exist. Please ensure all required data is set up first.');
+          }
+          
+          throw new Error(`Database error: ${extractErrorMessage(projectError)}`);
+        }
 
         // 2. If not skipping default options, create them
         if (projectData.statuses) {
@@ -34,7 +87,13 @@ export const projects = {
               updated_at: new Date(),
             }))
           );
-          if (statusError) throw statusError;
+          if (statusError) {
+            // Provide context-aware error message
+            if (statusError.message?.includes('does not exist')) {
+              throw new Error('Statuses table not found. Please run the SQL schema in Supabase.');
+            }
+            throw new Error(`Failed to create statuses: ${extractErrorMessage(statusError)}`);
+          }
         }
 
         if (projectData.labels) {
@@ -45,7 +104,12 @@ export const projects = {
               updated_at: new Date(),
             }))
           );
-          if (labelError) throw labelError;
+          if (labelError) {
+            if (labelError.message?.includes('does not exist')) {
+              throw new Error('Labels table not found. Please run the SQL schema in Supabase.');
+            }
+            throw new Error(`Failed to create labels: ${extractErrorMessage(labelError)}`);
+          }
         }
 
         if (projectData.priorities) {
@@ -58,7 +122,12 @@ export const projects = {
                 updated_at: new Date(),
               }))
             );
-          if (priorityError) throw priorityError;
+          if (priorityError) {
+            if (priorityError.message?.includes('does not exist')) {
+              throw new Error('Priorities table not found. Please run the SQL schema in Supabase.');
+            }
+            throw new Error(`Failed to create priorities: ${extractErrorMessage(priorityError)}`);
+          }
         }
 
         if (projectData.sizes) {
@@ -69,7 +138,12 @@ export const projects = {
               updated_at: new Date(),
             }))
           );
-          if (sizeError) throw sizeError;
+          if (sizeError) {
+            if (sizeError.message?.includes('does not exist')) {
+              throw new Error('Sizes table not found. Please run the SQL schema in Supabase.');
+            }
+            throw new Error(`Failed to create sizes: ${extractErrorMessage(sizeError)}`);
+          }
         }
 
         return project;
@@ -78,6 +152,7 @@ export const projects = {
       }
     },
     update: async (projectId: string, updates: Partial<IProject>) => {
+      const supabase = createClient();
       const { error } = await supabase
         .from('projects')
         .update({
@@ -89,6 +164,7 @@ export const projects = {
       if (error) throw error;
     },
     delete: async (projectId: string) => {
+      const supabase = createClient();
       const { error } = await supabase
         .from('projects')
         .delete()
@@ -97,6 +173,7 @@ export const projects = {
       if (error) throw error;
     },
     close: async (projectId: string) => {
+      const supabase = createClient();
       const { error } = await supabase
         .from('projects')
         .update({
@@ -108,6 +185,7 @@ export const projects = {
       if (error) throw error;
     },
     reopen: async (projectId: string) => {
+      const supabase = createClient();
       const { error } = await supabase
         .from('projects')
         .update({
@@ -123,6 +201,7 @@ export const projects = {
   // Project options/fields
   fields: {
     getStatuses: async (projectId: string) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('statuses')
         .select('*')
@@ -133,6 +212,7 @@ export const projects = {
       return data;
     },
     getLabels: async (projectId: string) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('labels')
         .select('*')
@@ -142,6 +222,7 @@ export const projects = {
       return data;
     },
     getPriorities: async (projectId: string) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('priorities')
         .select('*')
@@ -152,6 +233,7 @@ export const projects = {
       return data;
     },
     getSizes: async (projectId: string) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('sizes')
         .select('*')
@@ -166,6 +248,7 @@ export const projects = {
   // Project members
   members: {
     getAll: async (projectId: string) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('project_members')
         .select(
@@ -185,6 +268,7 @@ export const projects = {
       return (data as any[]).map((m) => m.user) as IUser[];
     },
     getProjectOwner: async (projectId: string) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('projects')
         .select(
@@ -222,40 +306,28 @@ export const projects = {
     },
   },
 
-  // User's projects
+  // User's projects - returns all projects for all authenticated users
   getUserProjects: async (userId: string) => {
-    const [ownedProjects, memberProjects] = await Promise.all([
-      // Get projects created by user
-      supabase
+    const supabase = createClient();
+    try {
+      // Get ALL projects (since all authenticated users can see all projects)
+      const { data, error } = await supabase
         .from('projects')
         .select('*')
-        .eq('created_by', userId)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false });
 
-      // Get projects where user is a member
-      supabase
-        .from('project_members')
-        /* Get all fields from the projects table and alias it as 'project' */
-        .select(
-          `
-          project:projects (*) 
-        `
-        )
-        .eq('user_id', userId)
-        .eq('invitationStatus', 'accepted')
-        .order('created_at', { ascending: false })
-        .not('project.created_by', 'eq', userId),
-    ]);
+      if (error) {
+        // If table doesn't exist, return empty array
+        if (error.message.includes('does not exist') || error.code === 'PGRST116') {
+          return [];
+        }
+        throw error;
+      }
 
-    if (ownedProjects.error) throw ownedProjects.error;
-    if (memberProjects.error) throw memberProjects.error;
-
-    // Combine and deduplicate projects
-    const allProjects = [
-      ...ownedProjects.data,
-      ...memberProjects.data.map((row) => row.project),
-    ];
-
-    return allProjects as IProject[];
+      return (data as IProject[]) || [];
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      return [];
+    }
   },
 };

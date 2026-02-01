@@ -15,20 +15,30 @@ interface HeaderProps {
   className?: string;
 }
 
-const supabase = createClient();
-
 export const Header = ({ className }: HeaderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
+  const supabase = createClient();
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (mounted) {
+          setUser(session?.user ?? null);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
+      });
 
     // Listen for auth changes
     const {
@@ -40,8 +50,11 @@ export const Header = ({ className }: HeaderProps) => {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
 
   if (isLoading) {
     return null; // or a loading spinner
@@ -59,7 +72,7 @@ export const Header = ({ className }: HeaderProps) => {
           href={user ? '/projects' : '/'}
           className="flex items-center space-x-2 font-bold text-xl hover:text-primary transition-colors"
         >
-          ProjeX
+          ATHER
         </Link>
 
         <div className="flex items-center gap-4">

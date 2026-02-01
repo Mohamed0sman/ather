@@ -27,7 +27,7 @@ export const EditableTitle = ({
       await onSave(text);
       setIsEditing(false);
     } catch (error) {
-      console.error('Failed to save title:', error);
+      console.error('Failed to save title');
       // Optionally add error handling UI here
     } finally {
       setIsSaving(false);

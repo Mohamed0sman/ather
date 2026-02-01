@@ -18,7 +18,7 @@ export const TaskDetailsWrapper = ({ task }: { task: ITaskWithOptions }) => {
         await reloadProjectTasks();
       }
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error('Error updating task');
       toast({
         variant: 'destructive',
         title: 'Error',

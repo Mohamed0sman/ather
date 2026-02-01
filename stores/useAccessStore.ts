@@ -19,8 +19,6 @@ interface AccessState {
   requiresMinRole: (projectId: string, minRole: Role) => boolean;
 }
 
-const supabase = createClient();
-
 export const useAccessStore = create<AccessState>((set, get) => ({
   permissions: {},
   roles: {},
@@ -36,6 +34,7 @@ export const useAccessStore = create<AccessState>((set, get) => ({
   fetchProjectAccess: async (projectId) => {
     if (!projectId) return;
 
+    const supabase = createClient();
     const {
       data: { session },
     } = await supabase.auth.getSession();

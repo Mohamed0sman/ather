@@ -2,32 +2,38 @@ import { createClient } from '@/utils/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
-const supabase = createClient();
-
 // Function to fetch user details from the database
 const fetchUserDetails = async (
   userId: string | null
 ): Promise<Partial<IUser> | null> => {
   if (!userId) return null;
 
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, name, avatar, description, links')
-    .eq('id', userId)
-    .single();
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, name, avatar, description, links')
+      .eq('id', userId)
+      .single();
 
-  if (error) {
-    console.error('Error fetching user details:', error);
+    if (error) {
+      // Table doesn't exist or other error
+      console.warn('Error fetching user details:', error);
+      return null;
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      avatar: data.avatar,
+      description: data.description,
+      links: data.links,
+    };
+  } catch (err) {
+    // Catch any unexpected errors (like JSON parse errors from Supabase)
+    console.warn('Unexpected error fetching user details:', err);
     return null;
   }
-
-  return {
-    id: data.id,
-    name: data.name,
-    avatar: data.avatar,
-    description: data.description,
-    links: data.links,
-  };
 };
 
 export const useCurrentUser = (): {
@@ -36,6 +42,7 @@ export const useCurrentUser = (): {
 } => {
   const [userId, setUserId] = useState<string>('');
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     // Get initial session

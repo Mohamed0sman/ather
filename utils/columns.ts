@@ -1,9 +1,9 @@
 import { createClient } from '@/utils/supabase/client';
-
-const supabase = createClient();
+import { throwSupabaseError } from './error-utils';
 
 export const columns = {
-  async updateLimit(columnId: string, limit: number) {
+  updateLimit: async (columnId: string, limit: number) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('statuses')
       .update({ limit })
@@ -11,11 +11,12 @@ export const columns = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to update column limit');
     return data;
   },
 
-  async updateDetails(columnId: string, updates: Partial<ICustomFieldData>) {
+  updateDetails: async (columnId: string, updates: Partial<ICustomFieldData>) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('statuses')
       .update(updates)
@@ -23,36 +24,42 @@ export const columns = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to update column details');
     return data;
   },
 
-  async deleteColumn(columnId: string) {
+  deleteColumn: async (columnId: string) => {
+    const supabase = createClient();
     const { error } = await supabase
       .from('statuses')
       .delete()
       .eq('id', columnId);
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to delete column');
   },
 
-  async createColumn(projectId: string, data: Omit<ICustomFieldData, 'id'>) {
+  createColumn: async (
+    projectId: string,
+    data: Omit<ICustomFieldData, 'id'>
+  ) => {
+    const supabase = createClient();
     const { data: column, error } = await supabase
       .from('statuses')
       .insert({
         ...data,
         project_id: projectId,
         limit: 5,
-        order: await this.getNextOrder(projectId),
+        order: await columns.getNextOrder(projectId),
       })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throwSupabaseError(error, 'Failed to create column');
     return column;
   },
 
-  async getNextOrder(projectId: string) {
+  getNextOrder: async (projectId: string) => {
+    const supabase = createClient();
     const { data, error } = await supabase
       .from('statuses')
       .select('order')
@@ -61,7 +68,8 @@ export const columns = {
       .limit(1)
       .single();
 
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned"
+    if (error && error.code !== 'PGRST116')
+      throwSupabaseError(error, 'Failed to get next column order');
     return (data?.order ?? -1) + 1;
   },
 };

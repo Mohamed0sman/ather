@@ -94,7 +94,7 @@ export const Board: React.FC<Props> = ({
         variant: 'default',
       });
     } catch (error) {
-      console.error('Error creating column:', error);
+      console.error('Error creating column');
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -122,7 +122,7 @@ export const Board: React.FC<Props> = ({
         );
       }
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error('Error updating task');
       toast({
         variant: 'destructive',
         title: 'Error',

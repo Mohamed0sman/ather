@@ -1,8 +1,6 @@
 import { createClient } from './supabase/client';
 import type { User } from '@supabase/supabase-js';
 
-const supabase = createClient();
-
 export interface IUserLink {
   id: string;
   label: string;
@@ -21,93 +19,142 @@ export interface IUser {
   provider: 'google' | 'github' | 'email';
 }
 
+// Helper to check if table exists by attempting a simple query
+const tableExists = async (tableName: string): Promise<boolean> => {
+  try {
+    const supabase = createClient();
+    const { error } = await supabase.from(tableName).select('count').limit(1);
+    // If no error about table not existing, table exists
+    if (!error) return true;
+    // Check for PostgreSQL error code for undefined table (42P01)
+    if (error.code === '42P01' || error.message?.includes('does not exist')) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const users = {
-  async getUser(id: string) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', id)
-      .single();
+  getUser: async (id: string): Promise<IUser | null> => {
+    try {
+      // Check if table exists first
+      const exists = await tableExists('users');
+      if (!exists) return null;
 
-    if (error) throw error;
-    return data as IUser | null;
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) return null;
+      return data as IUser | null;
+    } catch {
+      return null;
+    }
   },
 
-  async createUser(user: Partial<IUser>) {
-    const { data, error } = await supabase
-      .from('users')
-      .insert([user])
-      .select()
-      .single();
+  createUser: async (user: Partial<IUser>): Promise<IUser | null> => {
+    try {
+      // Check if table exists first
+      const exists = await tableExists('users');
+      if (!exists) return null;
 
-    if (error) throw error;
-    return data as IUser;
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('users')
+        .insert([user])
+        .select()
+        .single();
+
+      if (error) return null;
+      return data as IUser;
+    } catch {
+      return null;
+    }
   },
 
-  async captureUserDetails(authUser: User) {
-    // Check if user already exists
-    const existingUser = await this.getUser(authUser.id).catch(() => null);
-    if (existingUser) return existingUser;
+  captureUserDetails: async (authUser: User): Promise<IUser | null> => {
+    try {
+      // Check if table exists first
+      const exists = await tableExists('users');
+      if (!exists) return null;
 
-    // Extract provider
-    const provider = authUser.app_metadata.provider as IUser['provider'];
+      // Check if user already exists
+      const existingUser = await users.getUser(authUser.id);
+      if (existingUser) return existingUser;
 
-    // Create new user
-    const newUser: Partial<IUser> = {
-      id: authUser.id,
-      email: authUser.email!,
-      name: authUser.user_metadata.full_name || authUser.email!.split('@')[0],
-      avatar: authUser.user_metadata.avatar_url || '',
-      description: '',
-      provider,
-      links: [],
-    };
+      // Extract provider
+      const provider = authUser.app_metadata.provider as IUser['provider'];
 
-    return await this.createUser(newUser);
+      // Create new user
+      const newUser: Partial<IUser> = {
+        id: authUser.id,
+        email: authUser.email!,
+        name: authUser.user_metadata.full_name || authUser.email!.split('@')[0],
+        avatar: authUser.user_metadata.avatar_url || '',
+        description: '',
+        provider,
+        links: [],
+      };
+
+      return await users.createUser(newUser);
+    } catch {
+      return null;
+    }
   },
 
-  async updateUser(id: string, updates: Partial<IUser>) {
-    const { data, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+  updateUser: async (id: string, updates: Partial<IUser>): Promise<IUser | null> => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data as IUser;
+      if (error) return null;
+      return data as IUser;
+    } catch {
+      return null;
+    }
   },
 
-  async updateProfile(
+  updateProfile: async (
     userId: string,
     updates: Partial<Omit<IUser, 'id' | 'email' | 'provider'>>
-  ) {
-    const { error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', userId);
+  ): Promise<void> => {
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', userId);
 
-    if (error) throw error;
+      if (error) return;
 
-    // Update auth user metadata if avatar or name changed
-    const metadata: { avatar_url?: string; full_name?: string } = {};
+      // Update auth user metadata if avatar or name changed
+      const metadata: { avatar_url?: string; full_name?: string } = {};
 
-    if (updates.avatar !== undefined) {
-      metadata.avatar_url = updates.avatar;
-    }
-
-    if (updates.name !== undefined) {
-      metadata.full_name = updates.name;
-    }
-
-    if (Object.keys(metadata).length > 0) {
-      const { error: authError } = await supabase.auth.updateUser({
-        data: metadata,
-      });
-
-      if (authError) {
-        console.error('Failed to update auth user metadata:', authError);
+      if (updates.avatar !== undefined) {
+        metadata.avatar_url = updates.avatar;
       }
+
+      if (updates.name !== undefined) {
+        metadata.full_name = updates.name;
+      }
+
+      if (Object.keys(metadata).length > 0) {
+        await supabase.auth.updateUser({
+          data: metadata,
+        });
+      }
+    } catch {
+      // Silently fail
     }
   },
 };
