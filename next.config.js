@@ -34,7 +34,7 @@ const nextConfig = {
     return config;
   },
   // Enable static optimization where possible
-  swcMinify: true,
+  // swcMinify is now enabled by default in Next.js 15
 };
 
 module.exports = nextConfig;
