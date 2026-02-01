@@ -21,19 +21,18 @@ export async function GET(request: Request) {
       throw error;
     }
 
-    // Check if user already exists in our database before allowing sign-in
+    // Check if user already exists in our database BEFORE creating profile
     if (data.user) {
-      const { data: existingUser, error: userError } = await supabase
+      // Check by email - if this email exists in our users table, allow sign-in
+      const { data: existingUserByEmail } = await supabase
         .from('users')
         .select('id')
-        .eq('id', data.user.id)
-        .single();
+        .eq('email', data.user.email)
+        .maybeSingle();
 
-      // If user doesn't exist in our database and this is not a sign-up flow
-      // (indicated by the error being 'user_not_found'), reject the sign-in
-      if (userError && userError.code === 'PGRST116') {
-        // User doesn't have a profile - sign them out and show error
-        console.error('User has no profile:', data.user.id);
+      // If user doesn't have a profile with this email, reject the sign-in
+      if (!existingUserByEmail) {
+        console.error('User email not found in our system:', data.user.email);
         await supabase.auth.signOut();
         
         const errorUrl = new URL('/auth/auth-error', requestUrl.origin);
