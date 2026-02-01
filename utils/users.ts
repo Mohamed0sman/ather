@@ -83,25 +83,26 @@ export const users = {
       const exists = await tableExists('users');
       if (!exists) return null;
 
-      // Check if user already exists
+      // Check if user already exists - do NOT create new users here
       const existingUser = await users.getUser(authUser.id);
-      if (existingUser) return existingUser;
+      if (!existingUser) {
+        // User doesn't exist - return null, don't create
+        console.warn('User profile does not exist, not creating automatically:', authUser.id);
+        return null;
+      }
 
-      // Extract provider
+      // User exists, update their details if needed
       const provider = authUser.app_metadata.provider as IUser['provider'];
-
-      // Create new user
-      const newUser: Partial<IUser> = {
-        id: authUser.id,
+      
+      // Update the user with latest info from auth
+      const updatedUser: Partial<IUser> = {
         email: authUser.email!,
         name: authUser.user_metadata.full_name || authUser.email!.split('@')[0],
         avatar: authUser.user_metadata.avatar_url || '',
-        description: '',
         provider,
-        links: [],
       };
 
-      return await users.createUser(newUser);
+      return await users.updateUser(authUser.id, updatedUser);
     } catch {
       return null;
     }

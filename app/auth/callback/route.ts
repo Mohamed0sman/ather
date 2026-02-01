@@ -50,17 +50,9 @@ export async function GET(request: Request) {
         errorUrl.searchParams.set('error', 'This account was created with a different sign-in method.');
         return NextResponse.redirect(errorUrl);
       }
-
-      // Capture user details after successful OAuth
-      try {
-        await users.captureUserDetails(data.user);
-      } catch (error) {
-        console.error('Error capturing user details:', error);
-        // Don't throw here - we still want to complete the auth flow
-      }
     }
 
-    // Redirect to the intended page
+    // Redirect to the intended page (do NOT create/update user profile)
     return NextResponse.redirect(new URL(next, requestUrl.origin));
   } catch (error) {
     console.error('Callback error:', error);
