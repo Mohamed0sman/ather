@@ -35,6 +35,7 @@ const nextConfig = {
   },
   // Enable static optimization where possible
   // swcMinify is now enabled by default in Next.js 15
+  turbopack: {}, // Use empty turbopack config to silence warning
 };
 
 module.exports = nextConfig;
