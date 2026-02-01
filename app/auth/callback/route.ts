@@ -21,12 +21,12 @@ export async function GET(request: Request) {
       throw error;
     }
 
-    // Check if user already exists in our database BEFORE creating profile
+    // Check if user already exists in our database
     if (data.user) {
       // Check by email - if this email exists in our users table, allow sign-in
       const { data: existingUserByEmail } = await supabase
         .from('users')
-        .select('id')
+        .select('id, email, provider')
         .eq('email', data.user.email)
         .maybeSingle();
 
@@ -37,6 +37,17 @@ export async function GET(request: Request) {
         
         const errorUrl = new URL('/auth/auth-error', requestUrl.origin);
         errorUrl.searchParams.set('error', 'Account not found. Please create an account first.');
+        return NextResponse.redirect(errorUrl);
+      }
+
+      // If user exists but signed up with a different provider, reject
+      const currentProvider = data.user.app_metadata.provider;
+      if (existingUserByEmail.provider !== currentProvider) {
+        console.error('User exists with different provider:', data.user.email);
+        await supabase.auth.signOut();
+        
+        const errorUrl = new URL('/auth/auth-error', requestUrl.origin);
+        errorUrl.searchParams.set('error', 'This account was created with a different sign-in method.');
         return NextResponse.redirect(errorUrl);
       }
 
