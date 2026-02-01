@@ -15,6 +15,7 @@ export default async function AuthErrorPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error: errorMessage } = await searchParams;
+  const isAccountNotFound = errorMessage?.includes('Account not found');
 
   return (
     <div className="flex items-center justify-center h-minus-135">
@@ -28,18 +29,29 @@ export default async function AuthErrorPage({
         <CardContent className="grid gap-4">
           <p className="text-sm text-muted-foreground">
             {errorMessage}
-            <ul className="list-disc list-inside mt-2">
-              <li>An expired or invalid link</li>
-              <li>A cancelled OAuth process</li>
-              <li>A technical issue</li>
-            </ul>
+            {isAccountNotFound ? (
+              <span className="block mt-2">
+                Please create an account first to sign in.
+              </span>
+            ) : (
+              <ul className="list-disc list-inside mt-2">
+                <li>An expired or invalid link</li>
+                <li>A cancelled OAuth process</li>
+                <li>A technical issue</li>
+              </ul>
+            )}
           </p>
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <Button asChild className="w-full">
             <Link href="/login">Return to Login</Link>
           </Button>
-          <Button asChild variant="outline" className="w-full">
+          {isAccountNotFound && (
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/create-account">Create Account</Link>
+            </Button>
+          )}
+          <Button asChild variant="ghost" className="w-full">
             <Link href="/">Go to Home</Link>
           </Button>
         </CardFooter>

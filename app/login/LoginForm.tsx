@@ -100,7 +100,10 @@ export function LoginForm() {
             Sign In
           </Button>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-3">
+          <p className="text-xs text-muted-foreground text-center">
+            Note: You must create an account first before signing in with OAuth.
+          </p>
           <OAuthSignIn isLoading={isLoading} onLoadingChange={setIsLoading} />
         </CardFooter>
       </form>

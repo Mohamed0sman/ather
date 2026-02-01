@@ -21,8 +21,27 @@ export async function GET(request: Request) {
       throw error;
     }
 
-    // Capture user details after successful OAuth
+    // Check if user already exists in our database before allowing sign-in
     if (data.user) {
+      const { data: existingUser, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', data.user.id)
+        .single();
+
+      // If user doesn't exist in our database and this is not a sign-up flow
+      // (indicated by the error being 'user_not_found'), reject the sign-in
+      if (userError && userError.code === 'PGRST116') {
+        // User doesn't have a profile - sign them out and show error
+        console.error('User has no profile:', data.user.id);
+        await supabase.auth.signOut();
+        
+        const errorUrl = new URL('/auth/auth-error', requestUrl.origin);
+        errorUrl.searchParams.set('error', 'Account not found. Please create an account first.');
+        return NextResponse.redirect(errorUrl);
+      }
+
+      // Capture user details after successful OAuth
       try {
         await users.captureUserDetails(data.user);
       } catch (error) {
