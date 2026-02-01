@@ -67,10 +67,11 @@ export const auth = {
   // OAuth Sign In (Google, GitHub)
   signInWithOAuth: async (provider: 'github' | 'google', nextUrl?: string) => {
     const supabase = createClient();
+    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || location.origin}/auth/callback?next=${nextUrl || '/projects'}`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${location.origin}/auth/callback?next=${nextUrl || '/projects'}`,
+        redirectTo: redirectUrl,
       },
     });
     if (error) throw error;

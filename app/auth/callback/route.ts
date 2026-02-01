@@ -21,28 +21,28 @@ export async function GET(request: Request) {
       throw error;
     }
 
-    // Check if user already exists in our database
+    // For OAuth sign-ins, check if user already exists
     if (data.user) {
-      // Check by email - if this email exists in our users table, allow sign-in
       const { data: existingUserByEmail } = await supabase
         .from('users')
         .select('id, email, provider')
         .eq('email', data.user.email)
         .maybeSingle();
 
-      // If user doesn't have a profile with this email, reject the sign-in
-      if (!existingUserByEmail) {
-        console.error('User email not found in our system:', data.user.email);
+      const currentProvider = data.user.app_metadata.provider;
+
+      // If user doesn't exist by email, reject OAuth sign-in
+      if (!existingUserByEmail && currentProvider !== 'email') {
+        console.error('OAuth user not found:', data.user.email);
         await supabase.auth.signOut();
         
         const errorUrl = new URL('/auth/auth-error', requestUrl.origin);
-        errorUrl.searchParams.set('error', 'Account not found. Please create an account first.');
+        errorUrl.searchParams.set('error', 'Account not found. Please create an account first using email and password.');
         return NextResponse.redirect(errorUrl);
       }
 
-      // If user exists but signed up with a different provider, reject
-      const currentProvider = data.user.app_metadata.provider;
-      if (existingUserByEmail.provider !== currentProvider) {
+      // If user exists but with different provider, reject
+      if (existingUserByEmail && existingUserByEmail.provider !== currentProvider) {
         console.error('User exists with different provider:', data.user.email);
         await supabase.auth.signOut();
         
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // Redirect to the intended page (do NOT create/update user profile)
+    // Redirect to the intended page
     return NextResponse.redirect(new URL(next, requestUrl.origin));
   } catch (error) {
     console.error('Callback error:', error);
