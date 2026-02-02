@@ -45,13 +45,20 @@ export const CreateCustomFieldOptionModal = ({
   return (
     <Dialog
       open={isModalOpen}
-      onOpenChange={(isOpen) => !isOpen && closeModal()}
+      onOpenChange={(isOpen) => {
+        if (isOpen) {
+          openModal();
+        } else {
+          closeModal();
+        }
+      }}
     >
       <DialogTrigger asChild>
         {triggerBtn ? (
-          React.cloneElement(triggerBtn, { onClick: openModal })
+          // Don't modify triggerBtn props - let Radix handle the trigger naturally
+          triggerBtn
         ) : can?.(ProjectAction.UPDATE_OPTIONS) ? (
-          <Button className={cn(successBtnStyles)} onClick={openModal}>
+          <Button className={cn(successBtnStyles)}>
             {triggerLabel}
           </Button>
         ) : null}
