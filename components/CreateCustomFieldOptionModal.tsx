@@ -9,7 +9,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { useModalDialog } from '@/hooks/useModalDialog';
 import { cn } from '@/lib/utils';
 import React, { ReactElement } from 'react';
 import { CustomOptionForm } from './CustomOptionForm';
@@ -32,30 +31,18 @@ export const CreateCustomFieldOptionModal = ({
   handleSubmit,
 }: Props) => {
   const { projectId } = useParams();
-  const { isModalOpen, openModal, closeModal } = useModalDialog();
   const { can } = useProjectAccess({ projectId: projectId as string });
 
   const handleSubmitData = (data: Omit<ICustomFieldData, 'id'>) => {
     if (typeof handleSubmit === 'function') {
       handleSubmit(data);
-      closeModal();
     }
   };
 
   return (
-    <Dialog
-      open={isModalOpen}
-      onOpenChange={(isOpen) => {
-        if (isOpen) {
-          openModal();
-        } else {
-          closeModal();
-        }
-      }}
-    >
+    <Dialog>
       <DialogTrigger asChild>
         {triggerBtn ? (
-          // Don't modify triggerBtn props - let Radix handle the trigger naturally
           triggerBtn
         ) : can?.(ProjectAction.UPDATE_OPTIONS) ? (
           <Button className={cn(successBtnStyles)}>
@@ -73,7 +60,7 @@ export const CreateCustomFieldOptionModal = ({
           onSubmit={(data) => handleSubmitData(data)}
           submitBtnLabel="Save"
           cancelButton={
-            <Button className={cn(secondaryBtnStyles)} onClick={closeModal}>
+            <Button className={cn(secondaryBtnStyles)}>
               Cancel
             </Button>
           }
