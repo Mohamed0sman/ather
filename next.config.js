@@ -21,6 +21,9 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  // Serverless function configuration
+  serverMinification: true,
+  serverSourceMaps: false,
   webpack: (config, { isServer, nextRuntime }) => {
     // Fix for Supabase SSR module issue with Next.js 15
     if (!isServer && nextRuntime === 'edge') {
