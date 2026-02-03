@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -52,7 +52,14 @@ const LandingPage: React.FC = () => {
   }, []);
 
   if (isLoading) {
-    return null; // or a loading spinner
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-primary/20 animate-spin" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -62,14 +69,18 @@ const LandingPage: React.FC = () => {
         {/* Content */}
         <div className="max-w-[800px] mx-auto text-center space-y-8 mb-20">
           <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              <Sparkles className="h-4 w-4" />
+              Project Management Made Simple
+            </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
               Organize your work,
               <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60">
                 One task at a time
               </span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-[600px] mx-auto">
+            <p className="text-xl text-muted-foreground max-w-[600px] mx-auto leading-relaxed">
               Goes beyond basic to-do lists, offering intuitive tools for
               prioritizing and managing projects and tasks with ease.
             </p>
@@ -77,15 +88,15 @@ const LandingPage: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {user ? (
-              <Button size="lg" asChild>
-                <Link href="/projects" className="gap-2">
+              <Button size="lg" asChild className="gap-2">
+                <Link href="/projects">
                   View Projects <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             ) : (
               <>
-                <Button size="lg" asChild>
-                  <Link href="/create-account" className="gap-2">
+                <Button size="lg" asChild className="gap-2">
+                  <Link href="/create-account">
                     Get Started <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -109,7 +120,8 @@ const LandingPage: React.FC = () => {
         {/* App Screenshot with Fade Effect */}
         <div className="relative w-full max-w-[1200px] mx-auto mt-20">
           <div className="relative">
-            <div className="relative bg-background/95 backdrop-blur rounded-lg shadow-2xl">
+            <div className="relative bg-background/95 backdrop-blur rounded-xl shadow-2xl border overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10 pointer-events-none" />
               <Image
                 src={
                   resolvedTheme === 'dark'
@@ -119,20 +131,24 @@ const LandingPage: React.FC = () => {
                 alt="App preview"
                 width={1824}
                 height={1080}
-                className="rounded-lg w-full"
+                className="rounded-xl w-full object-cover"
                 priority
               />
-              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background"></div>
             </div>
+            {/* Glow effect */}
+            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 blur-2xl -z-10 opacity-50" />
           </div>
         </div>
       </div>
 
       {/* Background Gradient Effect */}
-      <div className="fixed inset-0 -z-10 h-full w-full bg-background">
+      <div className="fixed inset-0 -z-10 h-full w-full bg-background pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-primary/5 to-background"></div>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="h-[40rem] w-[40rem] rounded-full bg-primary/5 blur-3xl"></div>
+        </div>
+        <div className="absolute top-1/4 right-1/4">
+          <div className="h-[30rem] w-[30rem] rounded-full bg-primary/3 blur-3xl"></div>
         </div>
       </div>
     </div>

@@ -24,14 +24,57 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isEmailValid, setIsEmailValid] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
 
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (value && !validateEmail(value)) {
+      setIsEmailValid(false);
+    } else {
+      setIsEmailValid(true);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate email before submitting
+    if (email && !validateEmail(email)) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Email',
+        description: 'Please enter a valid email address.',
+        duration: 5000,
+      });
+      return;
+    }
+
+    if (!email || !password) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Information',
+        description: 'Please enter both email and password.',
+        duration: 5000,
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
       await auth.signIn(email, password);
+      toast({
+        title: 'Welcome back!',
+        description: 'You have successfully signed in.',
+        duration: 3000,
+      });
       router.push('/projects');
       router.refresh();
     } catch (error) {
@@ -40,7 +83,7 @@ export function LoginForm() {
       const { message } = getAuthError(error);
       toast({
         variant: 'destructive',
-        title: 'Authentication Error',
+        title: 'Login Failed',
         description: message,
         duration: 5000,
       });
@@ -50,59 +93,85 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="w-96">
+    <Card className="w-full max-w-md shadow-lg border-0 bg-card">
       <form onSubmit={handleSubmit}>
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">Log in</CardTitle>
-          <CardDescription className="text-xs">Welcome back</CardDescription>
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle className="text-3xl font-bold text-center">Welcome Back</CardTitle>
+          <CardDescription className="text-center text-muted-foreground">
+            Enter your credentials to access your account
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div>
+          <div className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
-            <Link href="/create-account" className="text-blue-500">
-              Create account
+            <Link href="/create-account" className="text-primary font-medium hover:underline transition-colors">
+              Create one now
             </Link>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="name@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               disabled={isLoading}
               required
+              className={`h-11 ${!isEmailValid && email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
             />
+            {!isEmailValid && email && (
+              <p className="text-xs text-destructive">Please enter a valid email address</p>
+            )}
           </div>
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="text-xs text-blue-500">
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Link href="/forgot-password" className="text-xs text-primary hover:underline transition-colors">
                 Forgot password?
               </Link>
             </div>
             <Input
               id="password"
               type="password"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
               required
+              className="h-11"
             />
           </div>
 
-          <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading && (
-              <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+          <Button 
+            className="w-full h-11 font-medium" 
+            type="submit" 
+            disabled={isLoading || (!isEmailValid && !!email)}
+          >
+            {isLoading ? (
+              <>
+                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
             )}
-            Sign In
           </Button>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3">
-          <p className="text-xs text-muted-foreground text-center">
-            Note: You must create an account first before signing in with OAuth.
+        <CardFooter className="flex flex-col gap-4 pt-4">
+          <div className="relative w-full">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground text-center max-w-xs">
+            Note: You must create an account first before signing in with OAuth providers.
           </p>
           <OAuthSignIn isLoading={isLoading} onLoadingChange={setIsLoading} />
         </CardFooter>

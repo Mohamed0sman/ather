@@ -1,6 +1,7 @@
 import { useAccessStore } from '@/stores/useAccessStore';
 import { createClient } from './supabase/client';
 import { users } from './users';
+import type { IUser } from './users';
 
 export type AuthError = {
   message: string;
@@ -33,11 +34,26 @@ export const auth = {
 
     // Step 2: Create user profile in the users table
     try {
-      await users.captureUserDetails(data.user);
+      // Check if user profile already exists
+      const existingUser = await users.getUser(data.user.id);
+      
+      if (!existingUser) {
+        // Create new user profile
+        const provider = data.user.app_metadata.provider as IUser['provider'];
+        const newUser: Partial<IUser> = {
+          id: data.user.id,
+          email: data.user.email!,
+          name: data.user.user_metadata.full_name || data.user.email!.split('@')[0],
+          avatar: data.user.user_metadata.avatar_url || '',
+          description: '',
+          links: [],
+          provider: provider || 'email',
+        };
+        await users.createUser(newUser);
+      }
     } catch (profileError) {
       console.error('Error creating user profile:', profileError);
       // Don't fail signup if profile creation fails
-      // The trigger might handle it, or we can create it later
     }
 
     return data;
@@ -67,7 +83,7 @@ export const auth = {
   // OAuth Sign In (Google, GitHub)
   signInWithOAuth: async (provider: 'github' | 'google', nextUrl?: string) => {
     const supabase = createClient();
-    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || location.origin}/auth/callback?next=${nextUrl || '/projects'}`;
+    const redirectUrl = `${location.origin}/auth/callback?next=${nextUrl || '/projects'}`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {

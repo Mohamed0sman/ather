@@ -3,8 +3,10 @@ import { CreateAccountForm } from './CreateAccountForm';
 
 const CreateAccountPage = () => {
   return (
-    <div className="flex items-center justify-center h-minus-135 ">
-      <CreateAccountForm />
+    <div className="min-h-[calc(100vh-140px)] flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md">
+        <CreateAccountForm />
+      </div>
     </div>
   );
 };
