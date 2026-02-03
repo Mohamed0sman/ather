@@ -24,12 +24,26 @@ export const auth = {
 
     // If signup fails
     if (signUpError) {
+      // Check if it's an email confirmation error
+      if (signUpError.message?.includes('Email confirm') || signUpError.message?.includes('Confirmation')) {
+        throw new Error('Account created! Please check your email and click the confirmation link to activate your account.');
+      }
       throw signUpError;
     }
 
     // If no user data, something went wrong
     if (!data.user) {
       throw new Error('Failed to create user account');
+    }
+
+    // Check if email confirmation is pending
+    if (data.session === null && data.user.email_confirmed_at === null) {
+      // Email confirmation is required - return success with info
+      return {
+        ...data,
+        needsConfirmation: true,
+        message: 'Account created! Please check your email and click the confirmation link.',
+      };
     }
 
     // Step 2: Create user profile in the users table

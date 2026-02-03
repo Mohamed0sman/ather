@@ -114,7 +114,23 @@ export function CreateAccountForm() {
 
     try {
       setIsLoading(true);
-      await auth.signUp(email, password);
+      const result = await auth.signUp(email, password);
+      
+      // Check if email confirmation is required
+      if (result && 'needsConfirmation' in result && result.needsConfirmation) {
+        toast({
+          title: 'Check Your Email!',
+          description: 'Please check your email and click the confirmation link to activate your account.',
+          duration: 8000,
+        });
+        // Stay on this page and clear the form
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setIsLoading(false);
+        return;
+      }
+      
       toast({
         title: 'Account Created!',
         description: 'Your account has been created successfully. Redirecting to login...',
